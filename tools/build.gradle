@@ -1,0 +1,71 @@
+plugins {
+    alias(libs.plugins.android.library)
+
+}
+
+android {
+    namespace 'com.hudou.tools'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 24
+        targetSdk 36
+        versionName "1.0.01"
+
+        buildConfigField 'String', 'SERVICE_PACKAGE', '"com.hudou.tools.service"'
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    buildFeatures {
+        buildConfig  true
+    }
+    sourceSets {
+        main {
+            java.srcDirs += [
+                    "${project(':tools-api').buildDir}/generated/aidl_source_output_dir/release/out",
+            ]
+        }
+    }
+}
+
+dependencies {
+
+    implementation libs.appcompat
+    implementation libs.material
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+
+    api project(':tools-api')
+}
+
+tasks.register('generateReleaseAar') {
+    dependsOn 'assembleRelease'
+    doLast {
+        def version = android.defaultConfig.versionName
+
+        def aarFile = layout.buildDirectory.file("outputs/aar/tools-release.aar").get().asFile
+        def renamedAarFile = layout.buildDirectory.file("outputs/aar/hudou-tools-${version}.aar").get().asFile
+
+        if (aarFile.exists()) {
+            if (aarFile.renameTo(renamedAarFile)) {
+                println "Renaming file successful!"
+            } else {
+                throw new GradleException("Failed to rename aar file!")
+            }
+        } else {
+            throw new GradleException("AAR file not found!")
+        }
+    }
+}
